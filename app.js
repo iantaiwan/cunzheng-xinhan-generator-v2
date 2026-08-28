@@ -66,25 +66,22 @@
     const warnings = [];
 
     addRequiredError(errors, data, 'senderName', 'senderName', '寄件人姓名或名稱');
-    addRequiredError(errors, data, 'senderPostalCode', 'senderPostalCode', '寄件人郵遞區號');
     addRequiredError(errors, data, 'senderAddr', 'senderAddr', '寄件人詳細地址');
     addRequiredError(errors, data, 'recvName', 'recvName', '收件人姓名或名稱');
-    addRequiredError(errors, data, 'recvPostalCode', 'recvPostalCode', '收件人郵遞區號');
     addRequiredError(errors, data, 'recvAddr', 'recvAddr', '收件人詳細地址');
 
-    if (data.senderPostalCode && !Logic.isPostalCode(data.senderPostalCode)) {
+    if (!Logic.isOptionalPostalCode(data.senderPostalCode)) {
       errors.push({ id: 'senderPostalCode', message: '寄件人郵遞區號須為 3、5 或 6 碼數字。' });
     }
-    if (data.recvPostalCode && !Logic.isPostalCode(data.recvPostalCode)) {
+    if (!Logic.isOptionalPostalCode(data.recvPostalCode)) {
       errors.push({ id: 'recvPostalCode', message: '收件人郵遞區號須為 3、5 或 6 碼數字。' });
     }
 
     const hasAnyCc = Boolean(data.ccName || data.ccPostalCode || data.ccAddr);
     if (hasAnyCc) {
       addRequiredError(errors, data, 'ccName', 'ccName', '副本收件人姓名或名稱');
-      addRequiredError(errors, data, 'ccPostalCode', 'ccPostalCode', '副本收件人郵遞區號');
       addRequiredError(errors, data, 'ccAddr', 'ccAddr', '副本收件人詳細地址');
-      if (data.ccPostalCode && !Logic.isPostalCode(data.ccPostalCode)) {
+      if (!Logic.isOptionalPostalCode(data.ccPostalCode)) {
         errors.push({ id: 'ccPostalCode', message: '副本收件人郵遞區號須為 3、5 或 6 碼數字。' });
       }
     }
@@ -96,12 +93,12 @@
       errors.push({ id: 'content', message: '信函正文不得超過 5,000 個字元。' });
     }
 
-    const copyCount = Logic.parseBoundedInteger(data.copyCountRaw, 1, 10);
+    const copyCount = Logic.parseBoundedInteger(data.copyCountRaw, 0, 10);
     const attachCount = Logic.parseBoundedInteger(data.attachCountRaw, 0, 100);
     const extraOriginal = Logic.parseBoundedInteger(data.extraOriginalRaw, 0, 20);
     const extraCopy = Logic.parseBoundedInteger(data.extraCopyRaw, 0, 20);
 
-    if (copyCount === null) errors.push({ id: 'copyCount', message: '副本份數須為 1 至 10 的整數。' });
+    if (copyCount === null) errors.push({ id: 'copyCount', message: '副本份數須為 0 至 10 的整數。' });
     if (attachCount === null) errors.push({ id: 'attachCount', message: '附件張數須為 0 至 100 的整數。' });
     if (extraOriginal === null) errors.push({ id: 'extraOriginal', message: '加具正本份數須為 0 至 20 的整數。' });
     if (extraCopy === null) errors.push({ id: 'extraCopy', message: '加具副本份數須為 0 至 20 的整數。' });
