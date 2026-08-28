@@ -48,8 +48,8 @@
             <input type="text" id="senderName" maxlength="80" required>
           </div>
           <div>
-            <label for="senderPostalCode">郵遞區號 <span aria-hidden="true">*</span></label>
-            <input type="text" id="senderPostalCode" inputmode="numeric" maxlength="6" placeholder="3、5 或 6 碼" required>
+            <label for="senderPostalCode">郵遞區號（選填）</label>
+            <input type="text" id="senderPostalCode" inputmode="numeric" maxlength="6" placeholder="3、5 或 6 碼">
           </div>
           <div class="form-grid__wide">
             <label for="senderAddr">詳細地址 <span aria-hidden="true">*</span></label>
@@ -66,8 +66,8 @@
             <input type="text" id="recvName" maxlength="80" required>
           </div>
           <div>
-            <label for="recvPostalCode">郵遞區號 <span aria-hidden="true">*</span></label>
-            <input type="text" id="recvPostalCode" inputmode="numeric" maxlength="6" placeholder="3、5 或 6 碼" required>
+            <label for="recvPostalCode">郵遞區號（選填）</label>
+            <input type="text" id="recvPostalCode" inputmode="numeric" maxlength="6" placeholder="3、5 或 6 碼">
           </div>
           <div class="form-grid__wide">
             <label for="recvAddr">詳細地址 <span aria-hidden="true">*</span></label>
@@ -84,7 +84,7 @@
             <input type="text" id="ccName" maxlength="80">
           </div>
           <div>
-            <label for="ccPostalCode">郵遞區號</label>
+            <label for="ccPostalCode">郵遞區號（選填）</label>
             <input type="text" id="ccPostalCode" inputmode="numeric" maxlength="6" placeholder="3、5 或 6 碼">
           </div>
           <div class="form-grid__wide">
@@ -99,7 +99,7 @@
         <div class="form-grid form-grid--counts">
           <div>
             <label for="copyCount">副本份數</label>
-            <input type="number" id="copyCount" value="2" min="1" max="10" step="1">
+            <input type="number" id="copyCount" value="0" min="0" max="10" step="1">
           </div>
           <div>
             <label for="attachCount">附件張數</label>
@@ -114,7 +114,7 @@
             <input type="number" id="extraCopy" value="0" min="0" max="20" step="1">
           </div>
         </div>
-        <p class="field-hint">預設為正本 1 份、副本 2 份。若有附件，正本與每份副本都應備妥相同附件或合規替代件。</p>
+        <p class="field-hint">預設列印正本 1 份；副本、附件與加具份數皆為 0，可依需求調整。若有附件，正本與每份副本都應備妥相同附件或合規替代件。</p>
       </fieldset>
 
       <fieldset>
@@ -148,7 +148,7 @@
   </main>
 
   <footer class="site-footer no-print">
-    <p><strong>重要：</strong>本工具僅協助排版，不構成法律意見。交寄前請確認正副本內容完全相同、逐份簽名或蓋章，且姓名、地址及郵遞區號與信封一致。</p>
+    <p><strong>重要：</strong>本工具僅協助排版，不構成法律意見。交寄前請確認正副本內容完全相同、逐份簽名或蓋章，且姓名、地址及已填寫的郵遞區號與信封一致。</p>
     <p>列印建議：A4、縮放 100%、關閉頁首與頁尾。正式受理仍以中華郵政現場審核及最新規定為準。</p>
   </footer>
 
