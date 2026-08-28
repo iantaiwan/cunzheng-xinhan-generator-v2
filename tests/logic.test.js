@@ -49,7 +49,15 @@ test('郵遞區號僅接受 3、5 或 6 碼數字', () => {
   assert.equal(Logic.isPostalCode('ABC'), false);
 });
 
+test('選填郵遞區號可留白，填寫時仍檢查格式', () => {
+  assert.equal(Logic.isOptionalPostalCode(''), true);
+  assert.equal(Logic.isOptionalPostalCode('   '), true);
+  assert.equal(Logic.isOptionalPostalCode('100'), true);
+  assert.equal(Logic.isOptionalPostalCode('1000'), false);
+});
+
 test('整數欄位必須落在指定範圍', () => {
+  assert.equal(Logic.parseBoundedInteger('0', 0, 10), 0);
   assert.equal(Logic.parseBoundedInteger('2', 1, 10), 2);
   assert.equal(Logic.parseBoundedInteger('-1', 0, 10), null);
   assert.equal(Logic.parseBoundedInteger('2.5', 0, 10), null);
