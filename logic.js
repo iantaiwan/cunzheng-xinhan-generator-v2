@@ -66,6 +66,11 @@
     return /^\d{3}(?:\d{2,3})?$/.test(String(value ?? '').trim());
   }
 
+  function isOptionalPostalCode(value) {
+    const postalCode = String(value ?? '').trim();
+    return postalCode === '' || isPostalCode(postalCode);
+  }
+
   function parseBoundedInteger(value, minimum, maximum) {
     const raw = String(value ?? '').trim();
     if (!/^-?\d+$/.test(raw)) return null;
@@ -89,6 +94,7 @@
     countCharacters,
     countPages,
     escapeHtml,
+    isOptionalPostalCode,
     isPostalCode,
     paginateContent,
     parseBoundedInteger,
