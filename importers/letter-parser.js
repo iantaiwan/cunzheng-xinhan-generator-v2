@@ -97,6 +97,70 @@
     return working.map(cell => String(cell ?? '')).join('');
   }
 
+  // 從 PDF 或純文字取得的字格沒有表格結構，只剩「列標籤 + 內容」的文字行。
+  // 欄號表頭（1 2 3 … 20）是可靠的起點標記，其後最多十列即為字格。
+  const GRID_HEADER_DIGITS = Array.from({ length: GRID_WIDTH }, (_, index) => String(index + 1)).join('');
+
+  function isGridHeaderLine(line) {
+    return String(line ?? '').replace(/\D/g, '') === GRID_HEADER_DIGITS;
+  }
+
+  /**
+   * 把文字行拆成「字格列」與「其餘文字」。
+   *
+   * 列標籤有時與內容同一行（「三一、台端…」），有時自成一行（標籤與內容的
+   * 座標略有差異時）。用「下一行是否以下一個預期標籤開頭」來消歧義：
+   * 若是，這一列就是空白列；若不是，下一行才是這一列的內容。
+   */
+  function extractGridFromLines(lines) {
+    const gridRows = [];
+    const other = [];
+    let index = 0;
+
+    while (index < lines.length) {
+      if (!isGridHeaderLine(lines[index])) {
+        other.push(lines[index]);
+        index += 1;
+        continue;
+      }
+      index += 1; // 跳過欄號表頭
+
+      for (let row = 0; row < ROW_LABELS.length && index < lines.length; row += 1) {
+        const label = ROW_LABELS[row];
+        const line = String(lines[index] ?? '');
+        const trimmed = line.trim();
+
+        if (trimmed === label) {
+          const nextLine = String(lines[index + 1] ?? '');
+          const nextLabel = ROW_LABELS[row + 1];
+          const nextStartsNewRow = nextLabel !== undefined && nextLine.trim().startsWith(nextLabel);
+          const nextCouldBeContent = nextLine.trim() !== ''
+            && !nextStartsNewRow
+            && !isBoilerplate(nextLine)
+            && Logic.splitGraphemes(nextLine.trim()).length <= GRID_WIDTH;
+
+          if (nextCouldBeContent) {
+            gridRows.push(nextLine.trim());
+            index += 2;
+          } else {
+            gridRows.push('');
+            index += 1;
+          }
+          continue;
+        }
+
+        if (line.startsWith(label)) {
+          gridRows.push(line.slice(label.length));
+          index += 1;
+          continue;
+        }
+        break; // 這一頁的字格提早結束
+      }
+    }
+
+    return { gridRows, other };
+  }
+
   function splitPostalCode(address) {
     const text = normalizeSpaces(address);
     // 先整段取出開頭的數字，再交給共用的郵遞區號驗證。
@@ -271,13 +335,27 @@
       String(block.text ?? '').split('\n').forEach(line => paragraphLines.push(line));
     });
 
-    const { fields, found } = extractFields(paragraphLines);
-    const useGrid = gridRows > 0;
-    const content = useGrid ? contentFromGrid(gridLines) : contentFromParagraphs(paragraphLines);
+    let effectiveLines = paragraphLines;
+    let effectiveGridLines = gridLines;
+    let effectiveGridRows = gridRows;
+
+    // PDF 與純文字沒有表格結構，字格只剩文字行，需另行還原。
+    if (effectiveGridRows === 0) {
+      const recovered = extractGridFromLines(paragraphLines);
+      if (recovered.gridRows.length > 0) {
+        effectiveGridLines = recovered.gridRows;
+        effectiveGridRows = recovered.gridRows.length;
+        effectiveLines = recovered.other;
+      }
+    }
+
+    const { fields, found } = extractFields(effectiveLines);
+    const useGrid = effectiveGridRows > 0;
+    const content = useGrid ? contentFromGrid(effectiveGridLines) : contentFromParagraphs(effectiveLines);
 
     const notes = [];
     if (useGrid) {
-      notes.push(`偵測到 ${gridRows} 列字格，已依每列 20 格還原正文。`);
+      notes.push(`偵測到 ${effectiveGridRows} 列字格，已依每列 20 格還原正文。`);
     } else {
       notes.push('文件中沒有字格表格，已改用段落文字作為正文。');
     }
@@ -294,7 +372,14 @@
     if (missing.length > 0) notes.push(`未能判讀 ${missing.length} 個必填欄位，請自行填寫。`);
     if (!content.trim()) notes.push('未能從檔案中取得正文，請確認檔案內容或改用純文字檔。');
 
-    return { content, fields, found, notes, source: useGrid ? 'grid' : 'paragraphs', gridRows };
+    return {
+      content,
+      fields,
+      found,
+      notes,
+      source: useGrid ? 'grid' : 'paragraphs',
+      gridRows: effectiveGridRows
+    };
   }
 
   /** 純文字檔的入口：先切成段落區塊，再走同一套判讀。 */
@@ -312,8 +397,10 @@
     cleanName,
     contentFromParagraphs,
     extractFields,
+    extractGridFromLines,
     gridRowToLine,
     isBoilerplate,
+    isGridHeaderLine,
     isGridHeaderRow,
     isGridRow,
     joinWrappedLines,
