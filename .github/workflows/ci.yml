@@ -18,7 +18,7 @@ jobs:
           node-version: 22
       - name: Check JavaScript syntax
         run: |
-          node --check logic.js
-          node --check app.js
+          for file in *.js; do node --check "$file"; done
+          for file in tests/*.js; do node --check "$file"; done
       - name: Run unit tests
-        run: node --test tests/logic.test.js
+        run: node --test tests/*.test.js
