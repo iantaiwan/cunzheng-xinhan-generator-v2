@@ -158,6 +158,54 @@
     document.body.classList.remove('print-blocked');
   });
 
+  // 提供給匯入模組的最小接縫：只暴露「填入欄位」與「顯示訊息」，
+  // 不讓外部模組碰到內部狀態或直接操作預覽。
+  window.CunzhengApp = Object.freeze({
+    /**
+     * 把判讀出來的欄位填入表單，並標記為待人工核對。
+     * @param {Record<string, string|number|null>} values
+     * @returns {string[]} 實際被填入的欄位 id
+     */
+    setFormValues(values) {
+      const applied = [];
+      Object.entries(values || {}).forEach(([id, value]) => {
+        if (!Validation.FIELD_IDS.includes(id)) return;
+        if (value === null || value === undefined || value === '') return;
+        const field = document.getElementById(id);
+        if (!field) return;
+        field.value = String(value);
+        field.dataset.imported = 'true';
+        applied.push(id);
+      });
+      updateContentStats();
+      markPreviewDirty();
+      return applied;
+    },
+
+    setContent(text) {
+      contentInput.value = String(text ?? '');
+      contentInput.dataset.imported = 'true';
+      updateContentStats();
+      markPreviewDirty();
+    },
+
+    clearImportedMarks() {
+      Validation.FIELD_IDS.forEach(id => {
+        const field = document.getElementById(id);
+        if (field) delete field.dataset.imported;
+      });
+    },
+
+    notice(text) {
+      editorStatus.textContent = String(text ?? '');
+    }
+  });
+
+  // 使用者手動改過的欄位就不再標示為「匯入待核對」
+  form.addEventListener('input', event => {
+    if (event.target && event.target.dataset) delete event.target.dataset.imported;
+  });
+
   pagesRoot.innerHTML = '<div class="empty-preview no-print">填妥資料後按「產生預覽」，此處會顯示正式 A4 版面。</div>';
   updateContentStats();
 }());

@@ -735,3 +735,72 @@ textarea {
     font-size: 16pt;
   }
 }
+
+/* 匯入既有存證信函 */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.import-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.import-file input[type="file"] {
+  max-width: 100%;
+  padding: 8px;
+  border: 1px dashed #9fb0a6;
+  border-radius: 8px;
+  background: #f7faf8;
+  font: inherit;
+  cursor: pointer;
+}
+
+.import-file input[type="file"]:focus-visible {
+  outline: 2px solid #2f6f4f;
+  outline-offset: 2px;
+}
+
+.import-notes {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  color: #43514a;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.import-notes li + li {
+  margin-top: 3px;
+}
+
+.import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 10px;
+}
+
+.import-output {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  font-family: ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* 自動判讀填入的欄位以虛線標示，提醒逐項核對 */
+.editor [data-imported="true"] {
+  border-style: dashed;
+  border-color: #b8862b;
+  background: #fffaf0;
+}

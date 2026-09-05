@@ -27,6 +27,30 @@
       <div id="validationSummary" class="validation-summary" role="alert" tabindex="-1" hidden></div>
 
       <fieldset>
+        <legend>匯入既有存證信函（選填）</legend>
+        <p class="field-hint">支援 Word（.docx）、ODF（.odt）、有文字圖層的 PDF、HTML 與純文字檔。檔案只在這個瀏覽器頁面中解析，不會上傳。</p>
+        <div class="import-row">
+          <label class="import-file">
+            <span class="visually-hidden">選擇要匯入的檔案</span>
+            <input type="file" id="importFile" accept=".docx,.odt,.pdf,.html,.htm,.txt,.md,.text,image/*">
+          </label>
+        </div>
+        <p id="importOcrHint" class="field-hint"></p>
+        <p id="importStatus" class="editor-status" role="status" aria-live="polite"></p>
+
+        <div id="importResult" hidden>
+          <ul id="importNotes" class="import-notes"></ul>
+          <div class="import-actions">
+            <button type="button" id="importApply" class="button button--primary">填入表單</button>
+            <button type="button" id="importDownload" class="button">下載 .txt</button>
+            <button type="button" id="importCopy" class="button">複製文字</button>
+          </div>
+          <label for="importText">轉出的文字</label>
+          <textarea id="importText" class="import-output" readonly rows="10" spellcheck="false"></textarea>
+        </div>
+      </fieldset>
+
+      <fieldset>
         <legend>信函草稿</legend>
         <label for="template">常見情境範本（選填）</label>
         <select id="template">
@@ -155,6 +179,15 @@
   <script src="logic.js"></script>
   <script src="validation.js"></script>
   <script src="render.js"></script>
+  <script src="importers/zip.js"></script>
+  <script src="importers/xml-scan.js"></script>
+  <script src="importers/ooxml.js"></script>
+  <script src="importers/pdf-text.js"></script>
+  <script src="importers/html-letter.js"></script>
+  <script src="importers/letter-parser.js"></script>
+  <script src="importers/ocr.js"></script>
+  <script src="importers/index.js"></script>
   <script src="app.js"></script>
+  <script src="import-ui.js"></script>
 </body>
 </html>

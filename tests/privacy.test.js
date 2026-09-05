@@ -10,10 +10,20 @@ const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..');
 
+// 根目錄與 importers/ 的所有原始碼都要受同一套規則約束。
 function sourceFiles() {
-  return fs.readdirSync(ROOT)
+  const files = fs.readdirSync(ROOT)
     .filter(name => /\.(js|html|css)$/.test(name))
-    .map(name => ({ name, text: fs.readFileSync(path.join(ROOT, name), 'utf8') }));
+    .map(name => ({ name, full: path.join(ROOT, name) }));
+
+  const importersDir = path.join(ROOT, 'importers');
+  if (fs.existsSync(importersDir)) {
+    fs.readdirSync(importersDir)
+      .filter(name => name.endsWith('.js'))
+      .forEach(name => files.push({ name: `importers/${name}`, full: path.join(importersDir, name) }));
+  }
+
+  return files.map(file => ({ name: file.name, text: fs.readFileSync(file.full, 'utf8') }));
 }
 
 const FORBIDDEN_APIS = [
@@ -87,6 +97,34 @@ test('index.html 載入的每個指令碼都存在於儲存庫中', () => {
     assert.ok(fs.existsSync(path.join(ROOT, src)), `index.html 參照了不存在的檔案 ${src}`);
   });
 
-  // 模組必須在使用它們的 app.js 之前載入
-  assert.ok(scripts.indexOf('app.js') === scripts.length - 1, 'app.js 必須最後載入');
+  // 每個模組都必須排在使用它的模組之前，否則全域相依會在載入時就壞掉
+  const order = name => scripts.indexOf(name);
+  ['logic.js', 'validation.js', 'render.js', 'importers/index.js']
+    .forEach(dependency => {
+      assert.ok(order(dependency) !== -1, `index.html 未載入 ${dependency}`);
+      assert.ok(order(dependency) < order('app.js'), `${dependency} 必須排在 app.js 之前`);
+    });
+  ['importers/zip.js', 'importers/xml-scan.js', 'importers/ooxml.js',
+    'importers/pdf-text.js', 'importers/html-letter.js', 'importers/letter-parser.js',
+    'importers/ocr.js']
+    .forEach(dependency => {
+      assert.ok(order(dependency) !== -1, `index.html 未載入 ${dependency}`);
+      assert.ok(order(dependency) < order('importers/index.js'), `${dependency} 必須排在 importers/index.js 之前`);
+    });
+  assert.ok(order('app.js') < order('import-ui.js'), 'import-ui.js 依賴 app.js 建立的接縫，必須排在其後');
+});
+
+test('OCR 引擎只從同源的 vendor/ 載入，不使用任何外部網址', () => {
+  const ocr = fs.readFileSync(path.join(ROOT, 'importers/ocr.js'), 'utf8');
+  const entry = ocr.match(/VENDOR_ENTRY\s*=\s*'([^']+)'/);
+  assert.ok(entry, '找不到 OCR 引擎進入點');
+  assert.ok(!/^(?:https?:)?\/\//.test(entry[1]), 'OCR 引擎進入點必須是同源相對路徑');
+  assert.equal(entry[1], 'vendor/ocr-engine.js');
+
+  // 預設不得有任何 OCR 引擎被打包進儲存庫
+  const vendorDir = path.join(ROOT, 'vendor');
+  const shipped = fs.existsSync(vendorDir)
+    ? fs.readdirSync(vendorDir).filter(name => name.endsWith('.js'))
+    : [];
+  assert.deepEqual(shipped, [], 'vendor/ 不應納入任何引擎程式碼');
 });
