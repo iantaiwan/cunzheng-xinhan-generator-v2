@@ -688,9 +688,10 @@ textarea {
 }
 
 @media print {
+  /* 頁邊設為 0：瀏覽器沒有空間可放頁首／頁尾（網址、日期、頁碼） */
   @page {
     size: A4 portrait;
-    margin: 8mm;
+    margin: 0;
   }
 
   html,
@@ -716,11 +717,13 @@ textarea {
     overflow: visible;
   }
 
+  /* 原本 @page 的 8mm 頁邊改由 padding 承擔，內容區維持 184mm × 274mm 不變；
+     高度取 296mm（略小於 297mm）避免進位誤差多出空白頁 */
   .print-page {
-    width: 194mm;
-    height: 281mm;
+    width: 210mm;
+    height: 296mm;
     margin: 0;
-    padding: 4mm 5mm 3mm;
+    padding: 12mm 13mm 10mm;
     box-shadow: none;
   }
 
