@@ -39,7 +39,10 @@ test('格子索引超出範圍會丟出錯誤', () => {
 });
 
 test('表頭欄位與份數欄位都在頁面內，且彼此不重疊', () => {
-  const boxes = [...Object.entries(Layout.FIELDS), ...Object.entries(Layout.COUNTS)];
+  const boxes = [
+    ...Object.entries(Layout.FIELDS).map(([key, field]) => [key, Layout.fieldRegion(field)]),
+    ...Object.entries(Layout.COUNTS)
+  ];
   boxes.forEach(([key, box]) => assert.ok(inside(box, Layout.PAGE), `${key} 超出頁面`));
   for (let i = 0; i < boxes.length; i += 1) {
     for (let j = i + 1; j < boxes.length; j += 1) {
@@ -50,7 +53,8 @@ test('表頭欄位與份數欄位都在頁面內，且彼此不重疊', () => {
 
 test('表頭欄位不侵入格子區', () => {
   const gridTop = Layout.GRID_ROW_LINES[0];
-  Object.entries(Layout.FIELDS).forEach(([key, box]) => {
+  Object.entries(Layout.FIELDS).forEach(([key, field]) => {
+    const box = Layout.fieldRegion(field);
     assert.ok(box.y + box.height <= gridTop, `${key} 侵入格子區`);
   });
 });
@@ -61,35 +65,64 @@ test('字寬估算：中文一格、ASCII 半格', () => {
 });
 
 test('短文字維持最大字級、單行', () => {
-  const result = Layout.fitText('王大明', Layout.FIELDS.senderName);
+  const result = Layout.fitField(Layout.FIELDS.senderName, '王大明');
   assert.equal(result.fits, true);
   assert.equal(result.fontSize, Layout.FIELDS.senderName.maxSize);
   assert.deepEqual(result.lines, ['王大明']);
 });
 
-test('長地址會縮小字級並換行，且不超出框寬與行數', () => {
-  const box = Layout.FIELDS.senderAddr;
-  const address = '台北市中正區忠孝東路一段100號5樓之3';
-  const result = Layout.fitText(address, box);
-  assert.equal(result.fits, true);
-  assert.ok(result.fontSize < box.maxSize);
-  assert.ok(result.lines.length <= box.maxLines);
-  assert.equal(result.lines.join(''), address);
-  result.lines.forEach(line => {
-    assert.ok(Layout.measureEm(Array.from(line)) * result.fontSize <= box.width + 1e-6);
+test('地址欄延伸到表頭右框內側（官方右框 x=563.5）', () => {
+  ['senderAddr', 'recvAddr', 'ccAddr', 'recvName', 'ccName'].forEach(key => {
+    const field = Layout.FIELDS[key];
+    assert.ok(field.right >= 555 && field.right < 563.5, `${key} 右界 ${field.right}`);
+  });
+  // 寄件人姓名需停在官方「印」字（x=513.8）之前
+  assert.ok(Layout.FIELDS.senderName.right < 513.8);
+});
+
+test('一般長度地址以最大字級單行放下', () => {
+  ['senderAddr', 'recvAddr', 'ccAddr'].forEach(key => {
+    const field = Layout.FIELDS[key];
+    const result = Layout.fitField(field, '100 台北市中正區忠孝東路一段100號5樓之3');
+    assert.equal(result.fits, true, key);
+    assert.equal(result.lines.length, 1, key);
+    assert.equal(result.fontSize, field.maxSize, key);
   });
 });
 
+test('填入文字第一行垂直中心對齊官方標籤中心', () => {
+  Object.entries(Layout.FIELDS).forEach(([key, field]) => {
+    for (const text of ['甲', '甲'.repeat(60)]) {
+      const r = Layout.fitField(field, text);
+      const firstLineCenter = r.y + (r.fontSize * Layout.LINE_HEIGHT) / 2;
+      assert.ok(Math.abs(firstLineCenter - field.anchorY) < 1e-6, `${key} 偏離 ${firstLineCenter - field.anchorY}`);
+    }
+  });
+});
+
+test('很長的地址縮小字級並換行，不超出右界與下界', () => {
+  const field = Layout.FIELDS.senderAddr;
+  const address = '台北市中正區忠孝東路一段100號5樓之3（大樓管理室代收）收發室轉交';
+  const r = Layout.fitField(field, address);
+  assert.equal(r.fits, true);
+  assert.equal(r.lines.join(''), address);
+  assert.ok(r.lines.length <= field.maxLines);
+  r.lines.forEach(line => {
+    assert.ok(Layout.measureEm(Array.from(line)) * r.fontSize <= field.right - field.x + 1e-6);
+  });
+  assert.ok(r.y + r.lines.length * r.fontSize * Layout.LINE_HEIGHT <= field.bottom + 1e-6);
+});
+
 test('過長文字回報 fits=false，並以最小字級顯示', () => {
-  const box = Layout.FIELDS.ccAddr;
-  const result = Layout.fitText('甲'.repeat(200), box);
-  assert.equal(result.fits, false);
-  assert.equal(result.fontSize, box.minSize);
-  assert.ok(result.lines.length <= box.maxLines);
+  const field = Layout.FIELDS.ccAddr;
+  const r = Layout.fitField(field, '甲'.repeat(200));
+  assert.equal(r.fits, false);
+  assert.equal(r.fontSize, field.minSize);
+  assert.ok(r.lines.length <= field.maxLines);
 });
 
 test('空字串不產生任何行', () => {
-  const result = Layout.fitText('', Layout.FIELDS.ccName);
+  const result = Layout.fitField(Layout.FIELDS.ccName, '');
   assert.equal(result.fits, true);
   assert.deepEqual(result.lines, []);
 });

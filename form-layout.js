@@ -26,15 +26,22 @@
   // 官方 ODT 範本格子段落預設字級 14pt
   const GRID_FONT_SIZE = 14;
 
-  // 表頭填寫欄：x、y 為可填區左上角，width、height 為可填範圍
+  /*
+   * 表頭填寫欄（座標取自官方 PDF 的標籤文字與表頭右框 x=563.5）：
+   *   x       ：標籤「姓名」「詳細地址：」右緣
+   *   right   ：可填寫的右界（寄件人姓名停在「印」字前，其餘到右框內側）
+   *   anchorY ：同列標籤的垂直中心，填入文字第一行以此對齊
+   *   bottom  ：多行時往下延伸的界線（不超過下一個標籤）
+   */
   const FIELDS = Object.freeze({
-    senderName: Object.freeze({ x: 324.5, y: 91.5, width: 187.3, height: 13, maxSize: 11, minSize: 6, maxLines: 1 }),
-    senderAddr: Object.freeze({ x: 344.4, y: 117.5, width: 97.8, height: 20, maxSize: 9, minSize: 5.5, maxLines: 2 }),
-    recvName: Object.freeze({ x: 326.4, y: 138.5, width: 115.8, height: 13, maxSize: 11, minSize: 6, maxLines: 1 }),
-    recvAddr: Object.freeze({ x: 344.4, y: 161.5, width: 97.8, height: 20, maxSize: 9, minSize: 5.5, maxLines: 2 }),
-    ccName: Object.freeze({ x: 326.4, y: 181.8, width: 115.8, height: 12, maxSize: 11, minSize: 6, maxLines: 1 }),
-    ccAddr: Object.freeze({ x: 344.4, y: 197.2, width: 97.8, height: 12.5, maxSize: 9, minSize: 5.5, maxLines: 2 })
+    senderName: Object.freeze({ x: 324.5, right: 510, anchorY: 98.45, bottom: 117, maxSize: 11, minSize: 6, maxLines: 1 }),
+    senderAddr: Object.freeze({ x: 344.4, right: 560, anchorY: 123.6, bottom: 137.5, maxSize: 10.5, minSize: 5.5, maxLines: 2 }),
+    recvName: Object.freeze({ x: 326.4, right: 560, anchorY: 144.2, bottom: 161.3, maxSize: 11, minSize: 6, maxLines: 1 }),
+    recvAddr: Object.freeze({ x: 344.4, right: 560, anchorY: 167.6, bottom: 181, maxSize: 10.5, minSize: 5.5, maxLines: 2 }),
+    ccName: Object.freeze({ x: 326.4, right: 560, anchorY: 187.4, bottom: 196.5, maxSize: 11, minSize: 6, maxLines: 1 }),
+    ccAddr: Object.freeze({ x: 344.4, right: 560, anchorY: 203.0, bottom: 209.8, maxSize: 10.5, minSize: 5.5, maxLines: 2 })
   });
+  const LINE_HEIGHT = 1.15;
 
   // 表尾份數：數字置中於兩個標籤之間的空白處
   const COUNTS = Object.freeze({
@@ -102,21 +109,49 @@
 
   /*
    * 在固定框內找出能完整放下文字的最大字級（0.25pt 一級遞減）。
+   * box.height 可為數字，或依字級回傳可用高度的函式。
    * 回傳 { fontSize, lines, fits }；若最小字級仍放不下，fits 為 false，並以最小字級截斷換行。
    */
   function fitText(text, box) {
     const characters = Array.from(String(text ?? ''));
     if (characters.length === 0) return { fontSize: box.maxSize, lines: [], fits: true };
-    const lineHeight = 1.15;
+    const heightFor = typeof box.height === 'function' ? box.height : () => box.height;
     for (let size = box.maxSize; size >= box.minSize - 1e-9; size -= 0.25) {
-      const maxEm = box.width / size;
-      const lines = wrapToWidth(characters, maxEm);
-      if (lines.length <= box.maxLines && lines.length * size * lineHeight <= box.height + 1e-9) {
+      const lines = wrapToWidth(characters, box.width / size);
+      if (lines.length <= box.maxLines && lines.length * size * LINE_HEIGHT <= heightFor(size) + 1e-9) {
         return { fontSize: Math.round(size * 100) / 100, lines, fits: true };
       }
     }
     const lines = wrapToWidth(characters, box.width / box.minSize).slice(0, box.maxLines);
     return { fontSize: box.minSize, lines, fits: false };
+  }
+
+  // 第一行行框的上緣：讓該行垂直中心落在 anchorY（與官方標籤對齊）
+  function fieldTop(field, fontSize) {
+    return field.anchorY - (fontSize * LINE_HEIGHT) / 2;
+  }
+
+  // 欄位在最大字級時可能佔用的範圍（供重疊檢查）
+  function fieldRegion(field) {
+    const y = fieldTop(field, field.maxSize);
+    return { x: field.x, y, width: field.right - field.x, height: field.bottom - y };
+  }
+
+  /*
+   * 表頭欄位排版：回傳 { fontSize, lines, fits, x, y, width, height }，
+   * x/y/width/height 為實際放置的框（pt）。
+   */
+  function fitField(field, text) {
+    const width = field.right - field.x;
+    const fitted = fitText(text, {
+      width,
+      maxSize: field.maxSize,
+      minSize: field.minSize,
+      maxLines: field.maxLines,
+      height: size => field.bottom - fieldTop(field, size)
+    });
+    const y = fieldTop(field, fitted.fontSize);
+    return { ...fitted, x: field.x, y, width, height: field.bottom - y };
   }
 
   return Object.freeze({
@@ -128,7 +163,11 @@
     COUNTS,
     COUNT_FONT_SIZE,
     COPY_MARKS,
+    LINE_HEIGHT,
     cellBox,
+    fieldRegion,
+    fieldTop,
+    fitField,
     fitText,
     measureEm
   });

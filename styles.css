@@ -350,10 +350,11 @@ textarea {
   white-space: nowrap;
 }
 
+/* 表頭欄位：第一行由座標模組對齊官方標籤中心，多行往下延伸 */
 .form-field {
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .grid-char,

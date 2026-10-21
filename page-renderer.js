@@ -30,12 +30,11 @@
     }
 
     function fieldBox(doc, key, text, warnings) {
-      const box = layout.FIELDS[key];
-      const fitted = layout.fitText(text, box);
+      const fitted = layout.fitField(layout.FIELDS[key], text);
       if (!fitted.fits) warnings.add(key);
       const element = doc.createElement('div');
       element.className = 'form-text form-field';
-      placeBox(element, box);
+      placeBox(element, fitted);
       element.style.fontSize = pt(fitted.fontSize);
       fitted.lines.forEach(line => {
         const span = doc.createElement('span');

@@ -161,14 +161,40 @@ def main():
                    and c["x0"] * scale < label_word["x1"] + max_dx
                    and (c["top"] + c["bottom"]) / 2 * scale > y0 - 6
                    and (c["top"] + c["bottom"]) / 2 * scale < y1 + 12]
-            return "".join(c["text"] for c in sorted(got, key=lambda c: (round(c["top"]), c["x0"])))
+            # 依字的中心線分行（中英字型的字框上緣不同，不能用 top 分組），同行再依 x 排序
+            got.sort(key=lambda c: (c["top"] + c["bottom"]) / 2)
+            lines, last = [], None
+            for c in got:
+                mid = (c["top"] + c["bottom"]) / 2
+                if last is None or mid - last > 4:
+                    lines.append([])
+                lines[-1].append(c)
+                last = mid
+            return "".join(c["text"] for line in lines for c in sorted(line, key=lambda c: c["x0"]))
 
         name_labels = sorted(labels.get("姓名:", []) + labels.get("姓名：", []), key=lambda w: w["top"])
         addr_labels = sorted(labels["詳細地址："], key=lambda w: w["top"])
         check("寄件人姓名位置", "王大明" in text_near(name_labels[0]))
-        check("寄件人地址位置", "忠孝東路" in text_near(addr_labels[0], 105))
+        check("寄件人地址位置", "忠孝東路" in text_near(addr_labels[0], 220))
         check("收件人姓名位置", "李小華" in text_near(name_labels[1]))
-        check("收件人地址位置", "和平東路" in text_near(addr_labels[1], 105))
+        check("收件人地址位置", "和平東路" in text_near(addr_labels[1], 220))
+
+        def first_line_offset(label_word, max_dx=225):
+            near = [c for c in chars if label_word["x1"] - 0.5 <= c["x0"] * scale < label_word["x1"] + max_dx
+                    and label_word["top"] - 8 < c["top"] * scale < label_word["bottom"] + 2]
+            if not near:
+                return None
+            label_mid = (label_word["top"] + label_word["bottom"]) / 2
+            mids = [(c["top"] + c["bottom"]) / 2 * scale for c in near]
+            return max(abs(m - label_mid) for m in mids)
+
+        for label, name in [(name_labels[0], "寄件人姓名"), (addr_labels[0], "寄件人地址"),
+                            (name_labels[1], "收件人姓名"), (addr_labels[1], "收件人地址")]:
+            off = first_line_offset(label)
+            check(f"{name}與官方標籤同一水平線", off is not None and off < 1.5,
+                  "找不到文字" if off is None else f"中心偏差 {off:.2f}pt")
+        addr_line = text_near(addr_labels[0], 220)
+        check("一般地址單行顯示", "台北市中正區忠孝東路一段100號5樓" in addr_line, addr_line)
 
         def number_between(left_label, right_label, top):
             got = [c["text"] for c in chars
