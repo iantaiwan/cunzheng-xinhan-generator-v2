@@ -11,7 +11,7 @@
   3. 表頭位置：姓名、地址必須落在官方「姓名」「詳細地址」標籤右側同一列
   4. 份數位置：頁數與份數數字落在官方表尾對應空白處
   5. 分頁：PDF 頁數 = 正副本份數 × 內容頁數，紙張為 A4，無多餘空白頁
-  6. 公文字型：系統有楷書字型時，所有填入文字都必須以楷書（標楷體等）輸出
+  6. 字型依郵局官方範本：中文為標楷體（楷書）、英數為 Times New Roman（或字寬相容字型）
 """
 import argparse
 import io
@@ -180,16 +180,21 @@ def main():
         check("表尾正本份數", number_between(205.2, 245.2, 598.9) == "1")
         check("表尾副本份數", number_between(205.2, 245.2, 609.0) == "1")
 
-    print("[6] 公文字型")
+    print("[6] 字型（依郵局官方範本）")
     fc = subprocess.run(["fc-list"], capture_output=True, text=True).stdout
     if re.search(r"kai|楷", fc, re.I):
         with pdfplumber.open(out / "filled.pdf") as pdf:
             page = pdf.pages[0]
             # 疊字只在格子、表頭欄位與表尾份數；以「非底圖字型」辨識：底圖文字已轉為向量路徑，不會出現在 chars
-            fonts = {c["fontname"] for c in page.chars}
-            non_kai = sorted(f for f in fonts if not re.search(r"kai|楷", f, re.I))
-            check("填入文字皆為楷書", bool(fonts) and not non_kai,
-                  f"使用字型 {sorted(fonts)}" if not non_kai else f"非楷書：{non_kai}")
+            cjk = [c for c in page.chars if ord(c["text"][0]) > 0x2E7F]
+            latin = [c for c in page.chars if c["text"].isascii() and c["text"].strip()]
+            bad_cjk = sorted({c["fontname"] for c in cjk if not re.search(r"kai|楷", c["fontname"], re.I)})
+            bad_latin = sorted({c["fontname"] for c in latin
+                                if not re.search(r"times|liberationserif|tinos", c["fontname"].replace(" ", ""), re.I)})
+            check("中文填入文字為標楷體（楷書）", bool(cjk) and not bad_cjk,
+                  f"{sorted({c['fontname'] for c in cjk})}" if not bad_cjk else f"非楷書：{bad_cjk}")
+            check("英數填入文字為 Times New Roman（或相容字型）", bool(latin) and not bad_latin,
+                  f"{sorted({c['fontname'] for c in latin})}" if not bad_latin else f"不符：{bad_latin}")
     else:
         print("  - 系統未安裝楷書字型，略過（可安裝 fonts-arphic-ukai 後再測）")
 

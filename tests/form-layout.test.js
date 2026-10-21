@@ -93,3 +93,9 @@ test('空字串不產生任何行', () => {
   assert.equal(result.fits, true);
   assert.deepEqual(result.lines, []);
 });
+
+test('正文字級與官方 ODT 範本一致（14pt），且小於格寬與行高', () => {
+  assert.equal(Layout.GRID_FONT_SIZE, 14);
+  const box = Layout.cellBox(0, 0);
+  assert.ok(Layout.GRID_FONT_SIZE < box.width && Layout.GRID_FONT_SIZE < box.height);
+});

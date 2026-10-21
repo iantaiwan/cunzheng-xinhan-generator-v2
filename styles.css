@@ -318,9 +318,12 @@ textarea {
   box-shadow: 0 8px 26px rgb(0 0 0 / 13%);
   break-after: page;
   page-break-after: always;
-  /* 公文字型：依《文書處理手冊》使用標楷體；依序對應各作業系統的楷書字型名稱
-     Windows：標楷體／DFKai-SB；macOS：Kaiti TC、BiauKai；Linux：全字庫正楷體 TW-Kai、文鼎 AR PL UKai */
-  --official-font: "標楷體", "DFKai-SB", "BiauKai", "BiauKaiTC", "Kaiti TC", "TW-Kai", "AR PL UKai TW", "AR PL UKai TW MBE", "KaiTi", "STKaiti", serif;
+  /* 依郵局官方存證信函用紙：官方 PDF 中文為標楷體；官方 ODT 範本格子預設為
+     中文「標楷體」、英數「Times New Roman」、14pt。瀏覽器會逐字退回，
+     因此英數字型排在前面，中文字自動由後面的楷書字型顯示。
+     英數：Times New Roman（Windows/macOS）、Liberation Serif／Tinos（Linux，字寬相容）
+     中文：標楷體／DFKai-SB（Windows）、Kaiti TC／BiauKai（macOS）、TW-Kai、AR PL UKai（Linux） */
+  --official-font: "Times New Roman", "Liberation Serif", "Tinos", "標楷體", "DFKai-SB", "BiauKai", "BiauKaiTC", "Kaiti TC", "TW-Kai", "AR PL UKai TW", "AR PL UKai TW MBE", "KaiTi", "STKaiti", serif;
   font-family: var(--official-font);
 }
 
