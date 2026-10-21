@@ -318,7 +318,10 @@ textarea {
   box-shadow: 0 8px 26px rgb(0 0 0 / 13%);
   break-after: page;
   page-break-after: always;
-  font-family: "PMingLiU", "新細明體", "MingLiU", "Noto Serif TC", "Noto Serif CJK TC", "Songti TC", serif;
+  /* 公文字型：依《文書處理手冊》使用標楷體；依序對應各作業系統的楷書字型名稱
+     Windows：標楷體／DFKai-SB；macOS：Kaiti TC、BiauKai；Linux：全字庫正楷體 TW-Kai、文鼎 AR PL UKai */
+  --official-font: "標楷體", "DFKai-SB", "BiauKai", "BiauKaiTC", "Kaiti TC", "TW-Kai", "AR PL UKai TW", "AR PL UKai TW MBE", "KaiTi", "STKaiti", serif;
+  font-family: var(--official-font);
 }
 
 .print-page:last-child {
@@ -339,6 +342,7 @@ textarea {
 
 .form-text {
   position: absolute;
+  font-family: var(--official-font);
   line-height: 1.15;
   white-space: nowrap;
 }

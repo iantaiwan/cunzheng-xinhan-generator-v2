@@ -11,10 +11,12 @@
   3. 表頭位置：姓名、地址必須落在官方「姓名」「詳細地址」標籤右側同一列
   4. 份數位置：頁數與份數數字落在官方表尾對應空白處
   5. 分頁：PDF 頁數 = 正副本份數 × 內容頁數，紙張為 A4，無多餘空白頁
+  6. 公文字型：系統有楷書字型時，所有填入文字都必須以楷書（標楷體等）輸出
 """
 import argparse
 import io
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -177,6 +179,19 @@ def main():
               number_between(125.2, 165.2, 598.9))
         check("表尾正本份數", number_between(205.2, 245.2, 598.9) == "1")
         check("表尾副本份數", number_between(205.2, 245.2, 609.0) == "1")
+
+    print("[6] 公文字型")
+    fc = subprocess.run(["fc-list"], capture_output=True, text=True).stdout
+    if re.search(r"kai|楷", fc, re.I):
+        with pdfplumber.open(out / "filled.pdf") as pdf:
+            page = pdf.pages[0]
+            # 疊字只在格子、表頭欄位與表尾份數；以「非底圖字型」辨識：底圖文字已轉為向量路徑，不會出現在 chars
+            fonts = {c["fontname"] for c in page.chars}
+            non_kai = sorted(f for f in fonts if not re.search(r"kai|楷", f, re.I))
+            check("填入文字皆為楷書", bool(fonts) and not non_kai,
+                  f"使用字型 {sorted(fonts)}" if not non_kai else f"非楷書：{non_kai}")
+    else:
+        print("  - 系統未安裝楷書字型，略過（可安裝 fonts-arphic-ukai 後再測）")
 
     print(f"\n結果：{sum(results)}/{len(results)} 通過；輸出檔在 {out}")
     return 0 if all(results) else 1
