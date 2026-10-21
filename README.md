@@ -7,7 +7,9 @@
 
 ## 目前功能
 
-- 依中華郵政存證信函用紙重建 A4 首頁版面。
+- 以中華郵政官方存證信函用紙（10206 版）向量圖為底圖，資料依官方座標疊印，版面與官方用紙一致。
+- 正本頁圈選「正」、副本頁圈選「副」；表尾自動填入頁數與各類份數。
+- 地址過長時自動縮小字級並換行；縮到最小仍放不下會提示另紙聯記。
 - 每行 20 格、每頁 10 行，超過 200 字自動分頁。
 - 支援正本、副本、加具正本與加具副本的列印份數。
 - 寄件人、收件人及選填副本收件人資料。
@@ -53,20 +55,40 @@
 
 ## 開發與測試
 
-不需安裝套件。使用 Node.js 內建測試工具即可執行邏輯測試：
+### 程式結構
+
+| 檔案 | 職責 |
+|------|------|
+| `logic.js` | 分頁、字數、驗證等純邏輯（無 DOM） |
+| `form-layout.js` | 官方用紙座標與文字縮放計算（純資料與純函式，無 DOM） |
+| `page-renderer.js` | 以底圖加座標產生頁面 DOM（不使用內嵌 style 屬性，符合 CSP） |
+| `app.js` | 表單、驗證流程與事件 |
+| `assets/official-form.svg` | 官方用紙第 1 頁轉出的向量底圖 |
+| `tests/fixtures/official-10206.pdf` | 官方用紙原檔，作為視覺驗證基準 |
+
+### 單元測試
+
+不需安裝套件，使用 Node.js 內建測試工具：
 
 ```bash
-node --test tests/logic.test.js
+node --test tests/logic.test.js tests/form-layout.test.js
 ```
 
-測試涵蓋 20／200／201 字分頁邊界、強制換行、Unicode grapheme、選填郵遞區號、含 0 的整數範圍及 HTML escaping。Pull request 也會透過 GitHub Actions 自動執行語法檢查與測試。
+### 列印版面視覺驗證
 
-## 技術
+以官方 PDF 為基準，獨立檢查底圖一致性、每個字是否落在官方格子內、表頭與表尾位置、頁數與紙張尺寸。需要 Python 3、Playwright（含 Chromium）、pdfplumber、pypdf、Pillow 與 poppler-utils：
 
-- 原生 HTML、CSS、JavaScript
-- 無框架、無套件管理器、無外部執行期依賴
-- 瀏覽器原生列印與 PDF 輸出
+```bash
+python3 tests/visual_check.py
+```
 
-## 授權
+### 重新產生底圖
 
-[MIT License](LICENSE)
+官方用紙改版時，換掉 `tests/fixtures/official-10206.pdf` 後：
+
+```bash
+pdftocairo -svg -f 1 -l 1 tests/fixtures/official-10206.pdf form.svg
+npx svgo --precision 2 --multipass -i form.svg -o assets/official-form.svg
+```
+
+並依新版 PDF 重新量測 `form-layout.js` 的座標，再跑上述兩項測試。

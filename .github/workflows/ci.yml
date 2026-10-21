@@ -20,5 +20,7 @@ jobs:
         run: |
           node --check logic.js
           node --check app.js
+          node --check form-layout.js
+          node --check page-renderer.js
       - name: Run unit tests
-        run: node --test tests/logic.test.js
+        run: node --test tests/logic.test.js tests/form-layout.test.js

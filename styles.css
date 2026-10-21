@@ -302,333 +302,64 @@ textarea {
   border-radius: 10px;
 }
 
-/* 中華郵政存證信函 A4 版面 */
+/* 中華郵政存證信函 A4 版面：官方用紙向量圖為底，資料依 pt 座標疊加 */
 .print-page {
-  width: 194mm;
-  height: 281mm;
+  /* 直接使用 pt：與官方 PDF（595 × 842 pt）座標系完全相同，無比例誤差。
+     高度取 841.5pt，略小於 A4 的 841.89pt，避免進位誤差溢出空白頁；
+     官方用紙最下方 0.5pt 為空白，裁掉不影響內容。 */
+  --pt: 1pt;
+  position: relative;
+  width: calc(var(--pt) * 595);
+  height: calc(var(--pt) * 841.5);
   margin: 0 auto 12mm;
-  padding: 4mm 5mm 3mm;
   overflow: hidden;
   color: #000;
   background: #fff;
   box-shadow: 0 8px 26px rgb(0 0 0 / 13%);
   break-after: page;
   page-break-after: always;
-  font-family: "PMingLiU", "Noto Serif TC", "Songti TC", serif;
+  font-family: "PMingLiU", "新細明體", "MingLiU", "Noto Serif TC", "Noto Serif CJK TC", "Songti TC", serif;
 }
 
 .print-page:last-child {
+  margin-bottom: 0;
   break-after: auto;
   page-break-after: auto;
 }
 
-.official-form {
-  position: relative;
-  width: 184mm;
-  margin: 0 auto;
-}
-
-.official-title {
-  height: 12mm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18pt;
-  font-weight: 700;
-  letter-spacing: 5mm;
-  white-space: nowrap;
-}
-
-.copy-mark {
+.form-background {
   position: absolute;
-  top: 15mm;
-  left: -6mm;
-  display: grid;
-  gap: 1.2mm;
-  width: 5mm;
-  text-align: center;
-  font-size: 11pt;
-  line-height: 1.05;
-}
-
-.official-header {
-  display: grid;
-  grid-template-columns: 32% 68%;
-  height: 48mm;
-  border: 0.35mm solid #000;
-}
-
-.document-box {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  padding: 6mm 5mm;
-  border-right: 0.25mm solid #000;
-  font-size: 13pt;
-}
-
-.document-box__office {
-  text-align: right;
-  letter-spacing: 3mm;
-}
-
-.document-box__number {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 3mm;
-  white-space: nowrap;
-}
-
-.parties-box {
-  display: grid;
-  grid-template-rows: 8mm repeat(3, 11mm) 7mm;
-  min-width: 0;
-  font-size: 9pt;
-}
-
-.organization-note,
-.overflow-note {
-  display: flex;
-  align-items: center;
-  padding: 1mm 3mm;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.organization-note {
-  font-size: 7.6pt;
-}
-
-.party-row {
-  display: grid;
-  grid-template-columns: 28mm 1fr;
-  align-items: center;
-  min-width: 0;
-  padding: 1mm 3mm;
-}
-
-.party-row__label {
-  white-space: nowrap;
-}
-
-.party-row__content {
-  min-width: 0;
-  line-height: 1.45;
-  overflow: hidden;
-}
-
-.party-row__content div {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.official-grid {
+  top: 0;
+  left: 0;
   width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  border: 0.35mm solid #000;
-  border-top: 0;
+  height: calc(var(--pt) * 842);
+  pointer-events: none;
+  user-select: none;
 }
 
-.official-grid th,
-.official-grid td {
-  border: 0.2mm solid #000;
-  padding: 0;
-  text-align: center;
-  vertical-align: middle;
-  font-weight: 400;
-}
-
-.official-grid thead th {
-  height: 7mm;
-  font-family: Arial, sans-serif;
-  font-size: 8pt;
-}
-
-.official-grid tbody td {
-  height: 10.7mm;
-  font-size: 13pt;
-  line-height: 1;
-}
-
-.official-grid .row-label {
-  width: 9mm;
-  font-family: "PMingLiU", serif;
-  font-size: 9pt;
-}
-
-.official-grid .axis-cell {
-  position: relative;
-  width: 9mm;
-  background: linear-gradient(to top right, transparent 49%, #000 49.5%, #000 50.5%, transparent 51%);
-}
-
-.axis-cell__grid,
-.axis-cell__row {
+.form-text {
   position: absolute;
-  font-family: "PMingLiU", serif;
-  font-size: 7pt;
-}
-
-.axis-cell__grid {
-  top: 0.8mm;
-  right: 1mm;
-}
-
-.axis-cell__row {
-  bottom: 0.6mm;
-  left: 1mm;
-}
-
-.official-lower {
-  display: grid;
-  grid-template-columns: 76% 24%;
-  height: 72mm;
-  border: 0.35mm solid #000;
-  border-top: 0;
-}
-
-.lower-left {
-  display: grid;
-  grid-template-rows: 29mm 43mm;
-  min-width: 0;
-  border-right: 0.25mm solid #000;
-}
-
-.fee-cert {
-  display: grid;
-  grid-template-rows: 18mm 11mm;
-  border-bottom: 0.25mm solid #000;
-  font-size: 8.6pt;
-}
-
-.fee-lines {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-content: center;
-  gap: 0.8mm 3mm;
-  padding: 1.2mm 3mm;
-  line-height: 1.3;
-}
-
-.fee-lines__wide {
-  grid-column: 1 / -1;
-}
-
-.cert-line {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 3mm;
-  padding: 1mm 3mm;
-  font-size: 7.4pt;
-  line-height: 1.4;
+  line-height: 1.15;
   white-space: nowrap;
 }
 
-.notes-box {
-  display: grid;
-  grid-template-columns: 11mm 1fr;
-  min-height: 0;
-}
-
-.notes-label {
+.form-field {
   display: flex;
   flex-direction: column;
-  justify-content: space-evenly;
-  align-items: center;
-  border-right: 0.25mm solid #000;
-  font-size: 13pt;
+  justify-content: center;
 }
 
-.notes-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  padding: 1.2mm 3mm;
-  font-size: 8.4pt;
-  line-height: 1.45;
-}
-
-.notes-content p {
-  margin: 0;
-}
-
-.postage-box {
-  display: grid;
-  grid-template-rows: 23mm 32mm 17mm;
-  min-width: 0;
-  text-align: center;
-}
-
-.postage-box__top,
-.postage-box__middle,
-.postage-box__bottom {
+.grid-char,
+.count-text {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.postage-box__top,
-.postage-box__middle {
-  border-bottom: 0.25mm solid #000;
-}
-
-.postage-box__top {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  font-size: 12pt;
-  letter-spacing: 2mm;
-}
-
-.postage-box__top span:first-child {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-right: 0.25mm solid #000;
-}
-
-.postage-box__middle {
-  font-size: 11pt;
-  line-height: 2;
-  letter-spacing: 2mm;
-  writing-mode: vertical-rl;
-}
-
-.postage-box__bottom {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  font-size: 12pt;
-}
-
-.postage-box__bottom span:first-child {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-right: 0.25mm solid #000;
-}
-
-.seam-row {
-  position: relative;
-  height: 10mm;
-  font-size: 8pt;
-}
-
-.seam-row span {
+.copy-ring {
   position: absolute;
-  top: 2mm;
-}
-
-.seam-row span:first-child {
-  left: 24%;
-}
-
-.seam-row span:last-child {
-  right: 24%;
+  border: calc(var(--pt) * 1) solid #000;
+  border-radius: 50%;
 }
 
 .site-footer {
@@ -717,13 +448,8 @@ textarea {
     overflow: visible;
   }
 
-  /* 原本 @page 的 8mm 頁邊改由 padding 承擔，內容區維持 184mm × 274mm 不變；
-     高度取 296mm（略小於 297mm）避免進位誤差多出空白頁 */
   .print-page {
-    width: 210mm;
-    height: 296mm;
     margin: 0;
-    padding: 12mm 13mm 10mm;
     box-shadow: none;
   }
 
